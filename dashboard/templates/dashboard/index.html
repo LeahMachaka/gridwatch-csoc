@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ page_title }} · GridWatch</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+</head>
+<body class="app analytics-ui">
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <a href="{% url 'dashboard:dashboard' %}" class="sidebar-logo" title="GridWatch">GW</a>
+      <nav class="sidebar-nav">
+        <a href="{% url 'dashboard:dashboard' %}" class="sidebar-ic is-active" title="Dashboard"><i data-feather="grid"></i></a>
+        <a href="#analyst-contact" class="sidebar-ic" title="Activity"><i data-feather="activity"></i></a>
+        <a href="{% url 'dashboard:incident_report' %}" class="sidebar-ic" title="Reports"><i data-feather="file-text"></i></a>
+        <a href="#" class="sidebar-ic" title="Settings"><i data-feather="settings"></i></a>
+      </nav>
+      <a href="{% url 'dashboard:incident_report' %}" class="sidebar-fab" title="New report">+</a>
+    </aside>
+
+    <div class="app-main">
+      <header class="analytics-top">
+        <div class="analytics-top-left">
+          <span class="analytics-breadcrumb">security</span>
+          <span class="analytics-pipe">/</span>
+          <span class="analytics-site text-mono-crop">{{ campus }}</span>
+        </div>
+        <div class="analytics-filters">
+          <span class="filter-pill is-muted">Last 24 hours</span>
+          <div class="filter-tabs" role="tablist" aria-label="Scope">
+            <span class="filter-tab is-on">All zones</span>
+            <span class="filter-tab">Zone 1</span>
+            <span class="filter-tab">Zone 2</span>
+            <span class="filter-tab">Zone 3</span>
+          </div>
+        </div>
+        <div class="analytics-top-right">
+          <span class="clock" id="live-clock">--:--:-- UTC</span>
+          <span class="analyst-pill"><i data-feather="user"></i>{{ analyst }}</span>
+          <a href="{% url 'dashboard:incident_report' %}" class="btn-primary-sm">IIR-2025-001</a>
+        </div>
+      </header>
+
+      <div class="critical-banner critical-banner--compact" role="status">
+        <i data-feather="alert-octagon"></i>
+        <span><strong>Critical</strong> · IoT-CAM-01 · IIR-2025-001 open · isolated</span>
+        <span class="blink-dot" aria-hidden="true"></span>
+      </div>
+
+      <main class="dashboard-page">
+        <section class="kpi-strip">
+          {% for card in kpi_cards %}
+          <article class="metric-tile metric-{{ card.color }}">
+            <div class="metric-tile-top">
+              <span class="metric-label">{{ card.label }}</span>
+              {% if forloop.first %}<span class="metric-trend metric-trend-up">▲</span>{% endif %}
+            </div>
+            <div class="metric-value">{{ card.value }}</div>
+            <div class="metric-sub">{{ card.sub }}</div>
+          </article>
+          {% endfor %}
+        </section>
+
+        <div class="analytics-grid">
+          <div class="analytics-col analytics-col-left">
+            <article class="panel viz-card" id="zone-map">
+              <div class="panel-header panel-header--flat">
+                <span class="panel-title">Devices by zone</span>
+                <span class="panel-meta">Mapped</span>
+              </div>
+              <div class="viz-map-split">
+                <ul class="zone-rank">
+                  {% for z in zones %}
+                  <li><span class="zr-name">{{ z.name }}</span><span class="zr-val">{{ z.device_count }}</span></li>
+                  {% endfor %}
+                </ul>
+                <div class="viz-map-img">
+                  <img src="{% static 'img/world-zones.svg' %}" alt="Zone distribution map (illustrative)" width="320" height="180" decoding="async" />
+                </div>
+              </div>
+            </article>
+
+            <article class="panel viz-card" id="analyst-contact">
+              <div class="panel-header panel-header--flat">
+                <span class="panel-title">Latest alerts</span>
+                <span class="panel-meta">Recent</span>
+              </div>
+              <div class="feed-list">
+                {% for alert in alerts %}
+                <div class="feed-item severity-{{ alert.severity|lower }}">
+                  <img class="feed-thumb" src="{% static alert.thumb %}" width="56" height="56" alt="" />
+                  <div class="feed-body">
+                    <div class="feed-title"><span class="mono">{{ alert.device }}</span> · {{ alert.severity }}</div>
+                    <div class="feed-meta">{{ alert.date }} · {{ alert.time }} UTC · {{ alert.zone }}</div>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            </article>
+          </div>
+
+          <div class="analytics-col analytics-col-center">
+            <article class="panel panel-devices panel-fill">
+              <div class="panel-header panel-header--flat">
+                <span class="panel-title"><i data-feather="server"></i> Device register</span>
+                <span class="panel-meta">{{ devices|length }} assets</span>
+              </div>
+              <div class="table-wrapper">
+                <table class="device-table">
+                  <thead>
+                    <tr>
+                      <th>Host</th>
+                      <th>IP</th>
+                      <th>Zone</th>
+                      <th>Score</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for device in devices %}
+                    <tr class="device-row status-row-{{ device.status|lower }}">
+                      <td class="mono device-hostname">{{ device.hostname }}</td>
+                      <td class="mono ip-text">{{ device.ip }}</td>
+                      <td><span class="zone-tag">{{ device.zone }}</span></td>
+                      <td>
+                        <div class="score-cell">
+                          <div class="score-bar-track">
+                            <div class="score-bar-fill score-{{ device.score }}" style="width: {{ device.score }}%"></div>
+                          </div>
+                          <span class="score-number mono">{{ device.score }}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span class="status-badge status-{{ device.status|lower }}">{{ device.status }}</span>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+
+          <div class="analytics-col analytics-col-right">
+            <article class="banner-card">
+              <img class="banner-card-img" src="{% static 'img/analytics-reference.png' %}" alt="Analytics dashboard reference" loading="lazy" />
+              <div class="banner-card-overlay">
+                <span class="banner-kicker">Reference</span>
+                <span class="banner-title">Clean analytics UI</span>
+                <a class="banner-cta" href="{% url 'dashboard:incident_report' %}">Open report</a>
+              </div>
+            </article>
+
+            <article class="panel chart-card">
+              <div class="panel-header panel-header--flat">
+                <span class="panel-title">Alerts by severity</span>
+                <span class="panel-meta">Share</span>
+              </div>
+              <div class="chart-canvas-wrap">
+                <canvas id="chart-severity" height="200"></canvas>
+              </div>
+            </article>
+
+            <article class="panel chart-card">
+              <div class="panel-header panel-header--flat">
+                <span class="panel-title">Devices by zone</span>
+                <span class="panel-meta">Count</span>
+              </div>
+              <div class="chart-canvas-wrap chart-canvas-wrap--wide">
+                <canvas id="chart-zones" height="220"></canvas>
+              </div>
+            </article>
+
+            <article class="panel panel-chart panel-compact">
+              <div class="panel-header panel-header--flat">
+                <span class="panel-title"><i data-feather="bar-chart-2"></i> Severity bars</span>
+                <span class="panel-meta">All time</span>
+              </div>
+              <div class="severity-chart">
+                {% for item in severity_counts %}
+                <div class="chart-row">
+                  <span class="chart-label">{{ item.level }}</span>
+                  <div class="chart-track">
+                    {% if item.count > 0 %}
+                    <div class="chart-bar" style="width: {{ item.count }}0%; background: {{ item.color }};"></div>
+                    {% else %}
+                    <div class="chart-bar chart-bar-empty"></div>
+                    {% endif %}
+                  </div>
+                  <span class="chart-count mono">{{ item.count }}</span>
+                </div>
+                {% endfor %}
+              </div>
+              <div class="pbad-stats">
+                <div class="pbad-stat">
+                  <span class="pbad-stat-value">2s</span>
+                  <span class="pbad-stat-label">Detect</span>
+                </div>
+                <div class="pbad-stat">
+                  <span class="pbad-stat-value">4m</span>
+                  <span class="pbad-stat-label">Contain</span>
+                </div>
+                <div class="pbad-stat">
+                  <span class="pbad-stat-value">96</span>
+                  <span class="pbad-stat-label">Score</span>
+                </div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <section class="zone-row zone-row--footer">
+          {% for zone in zones %}
+          <div class="zone-card health-{{ zone.health_color }}">
+            <div class="zone-header">
+              <div class="zone-name-block">
+                <span class="zone-name">{{ zone.name }}</span>
+                <span class="zone-label">{{ zone.label }}</span>
+              </div>
+              <span class="zone-health-badge health-badge-{{ zone.health_color }}">{{ zone.health }}</span>
+            </div>
+            <div class="zone-meta">
+              <span class="mono zone-vlan">{{ zone.vlan }}</span>
+              <span class="mono zone-subnet">{{ zone.subnet }}</span>
+            </div>
+            <div class="zone-stats">
+              <div class="zone-stat">
+                <span class="zs-value">{{ zone.device_count }}</span>
+                <span class="zs-label">Devices</span>
+              </div>
+              <div class="zone-stat">
+                <span class="zs-value zs-green">{{ zone.online }}</span>
+                <span class="zs-label">Online</span>
+              </div>
+              <div class="zone-stat">
+                <span class="zs-value zs-orange">{{ zone.alert }}</span>
+                <span class="zs-label">Alert</span>
+              </div>
+              <div class="zone-stat">
+                <span class="zs-value zs-red">{{ zone.isolated }}</span>
+                <span class="zs-label">Isolated</span>
+              </div>
+            </div>
+            <div class="zone-desc">{{ zone.description }}</div>
+          </div>
+          {% endfor %}
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <span>GridWatch — demonstration</span>
+        <span class="footer-sep">·</span>
+        <span>{{ analyst }}</span>
+        <span class="footer-sep">·</span>
+        <a href="https://github.com/LeahMachaka" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub</a>
+      </footer>
+    </div>
+  </div>
+
+  {{ chart_zones|json_script:"gw-data-zones" }}
+  {{ chart_severity|json_script:"gw-data-severity" }}
+
+  <script src="{% static 'js/dashboard.js' %}"></script>
+</body>
+</html>

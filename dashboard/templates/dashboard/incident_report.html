@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ page_title }}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+</head>
+<body class="soc-dashboard">
+
+<nav class="topbar" aria-label="Primary">
+  <div class="topbar-left">
+    <div class="logo-mark" aria-hidden="true">GW</div>
+    <div class="logo-text">
+      <span class="logo-main">GridWatch</span>
+      <span class="logo-sub">Incident intelligence report</span>
+    </div>
+  </div>
+  <ul class="portal-nav">
+    <li><a href="{% url 'dashboard:dashboard' %}" class="portal-nav-link">Dashboard</a></li>
+    <li><a href="{% url 'dashboard:incident_report' %}" class="portal-nav-link is-active" aria-current="page">Report</a></li>
+  </ul>
+  <div class="topbar-right">
+    <a href="{% url 'dashboard:dashboard' %}" class="iir-btn iir-btn--secondary">
+      <i data-feather="arrow-left"></i> Back to dashboard
+    </a>
+  </div>
+</nav>
+
+<main class="main-content iir-page">
+
+  <!-- IIR Header -->
+  <div class="iir-header">
+    <div class="iir-classification">CONFIDENTIAL — CSOC INTERNAL USE ONLY</div>
+    <h1 class="iir-title">Incident Intelligence Report</h1>
+    <div class="iir-ref">Reference: IIR-2025-001</div>
+    <div class="iir-severity-block">
+      <span class="iir-severity">SEVERITY: CRITICAL</span>
+      <span class="iir-status-block">STATUS: CONTAINED — UNDER INVESTIGATION</span>
+    </div>
+
+    <div class="iir-meta-grid">
+      <div class="iir-meta-item"><span class="iir-meta-label">Detection Time</span><span class="mono">15 May 2025, 02:17:43 UTC</span></div>
+      <div class="iir-meta-item"><span class="iir-meta-label">Affected Asset</span><span class="mono">IoT-CAM-01 (192.168.10.21)</span></div>
+      <div class="iir-meta-item"><span class="iir-meta-label">Detection Method</span><span>Passive Behavioural Anomaly Detection (PBAD)</span></div>
+      <div class="iir-meta-item"><span class="iir-meta-label">PBAD Score</span><span class="mono iir-score">94 / 100</span></div>
+      <div class="iir-meta-item"><span class="iir-meta-label">CSOC Analyst</span><span>Leah Machaka (LM-CSOC-01)</span></div>
+      <div class="iir-meta-item"><span class="iir-meta-label">Report Prepared</span><span>15 May 2025, 07:45 UTC</span></div>
+    </div>
+  </div>
+
+  <!-- Key Findings Box -->
+  <div class="finding-box">
+    <div class="finding-title"><i data-feather="alert-triangle"></i> Critical Findings</div>
+    <ul class="finding-list">
+      <li>IoT-CAM-01 communicated with external IP 185.220.101.47 — not in its approved destination list</li>
+      <li>PBAD deviation score: <strong>94/100</strong> — CRITICAL threshold is 80</li>
+      <li>47.3 MB of data transferred to external IP in 26 seconds during scheduled inactivity</li>
+      <li>ACL micro-segmentation prevented lateral movement to Zone 2 or Zone 3</li>
+      <li>Full containment achieved within 4 minutes of detection</li>
+    </ul>
+  </div>
+
+  <!-- Two column: Executive Summary + Timeline -->
+  <div class="iir-two-col">
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title">Executive Summary</span></div>
+      <div class="iir-text">
+        <p>At 02:17:43 UTC on 15 May 2025, the GridWatch CSOC PBAD engine flagged an anomalous outbound connection from IoT-CAM-01 (IP Camera 01, 192.168.10.21) located at the perimeter entrance of the Al Noor Government Services Campus.</p>
+        <p>IoT-CAM-01 is configured to stream video exclusively to the internal SIEM server at 192.168.30.30. Instead, it initiated a high-volume outbound data transfer to an unrecognised external IP address during a period of zero scheduled activity. This behaviour directly violated the established PBAD baseline and triggered a CRITICAL alert.</p>
+        <p>The GridWatch CSOC network segmentation design contained the incident to Zone 1, preventing any access to the secure government network in Zone 3. PBAD detected the anomaly within two seconds. Full containment was achieved in four minutes.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header"><span class="panel-title"><i data-feather="clock"></i> Incident Timeline</span></div>
+      <div class="timeline">
+        {% for event in timeline %}
+        <div class="timeline-item">
+          <div class="timeline-time mono">{{ event.time }}</div>
+          <div class="timeline-dot"></div>
+          <div class="timeline-body">
+            <span class="timeline-event">{{ event.event }}</span>
+            <p class="timeline-desc">{{ event.description }}</p>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recommendations -->
+  <div class="panel">
+    <div class="panel-header">
+      <span class="panel-title"><i data-feather="check-square"></i> Recommendations</span>
+    </div>
+    <div class="rec-grid">
+      {% for rec in recommendations %}
+      <div class="rec-card priority-{{ rec.priority|lower }}">
+        <div class="rec-top">
+          <span class="mono rec-ref">{{ rec.ref }}</span>
+          <span class="severity-badge badge-{{ rec.priority|lower }}">{{ rec.priority }}</span>
+        </div>
+        <p class="rec-text">{{ rec.text }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- PBAD Effectiveness -->
+  <div class="pbad-effectiveness-card">
+    <div class="pec-label">PBAD Effectiveness Score for IIR-2025-001</div>
+    <div class="pec-score">96 / 100</div>
+    <div class="pec-note">Detection was immediate. Containment achieved in 4 minutes. Zero lateral movement. The only identified gap is the absence of automated device isolation — addressed in Recommendation R03.</div>
+  </div>
+
+</main>
+
+<footer class="site-footer">
+  <span>GridWatch — IIR-2025-001 (demonstration)</span>
+  <span class="footer-sep">·</span>
+  <span>Confidential — internal use</span>
+  <span class="footer-sep">·</span>
+  <span>Leah Machaka</span>
+</footer>
+
+<script src="{% static 'js/dashboard.js' %}"></script>
+</body>
+</html>
