@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 180" fill="none">
+  <rect width="320" height="180" rx="8" fill="#252525"/>
+  <path fill="#363636" d="M40 90 Q80 40 140 55 T260 50 Q300 70 280 120 Q240 150 160 145 Q80 140 40 90Z"/>
+  <path fill="#404040" opacity=".9" d="M180 55 Q220 45 250 75 Q270 100 240 125 Q200 130 170 100 Z"/>
+  <circle cx="120" cy="88" r="10" fill="#14b8a6" opacity=".85"/>
+  <circle cx="210" cy="72" r="8" fill="#0ea5e9" opacity=".75"/>
+  <circle cx="175" cy="115" r="7" fill="#f97316" opacity=".8"/>
+  <text x="16" y="168" fill="#737373" font-family="Arial,sans-serif" font-size="9">Estates map (illustrative)</text>
+</svg>
