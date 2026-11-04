@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.venv/
+venv/
+pip-wheel-metadata/
+
+# Django
+*.sqlite3
+staticfiles/
+media/
+
+# Test and lint artifacts
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Docker
+.docker/
+docker-compose.override.yml
+
+# Environment
+.env
+
+# Editor and operating system
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
